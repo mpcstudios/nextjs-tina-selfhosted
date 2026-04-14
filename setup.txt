@@ -77,8 +77,12 @@ this URL in your browser):
 
   https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted&env=GITHUB_PERSONAL_ACCESS_TOKEN,NEXTAUTH_SECRET,S3_ACCESS_KEY,S3_SECRET_KEY,S3_REGION,S3_BUCKET,ENABLE_EXPERIMENTAL_COREPACK&envDescription=See%20.env.example%20in%20the%20repo%20for%20details%20on%20each%20variable.%20ENABLE_EXPERIMENTAL_COREPACK%20should%20be%20set%20to%201.&envLink=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted%2Fblob%2Fmain%2F.env.example&project-name=my-tina-site&stores=%5B%7B%22type%22%3A%22kv%22%7D%5D
 
+IMPORTANT: On the first screen, change the "Git Scope" dropdown
+from your personal account to "mpcstudios" so the repo is created
+under the org — not your personal GitHub.
+
 This automatically:
-  1. Copies the repo to your GitHub account
+  1. Copies the repo to the mpcstudios GitHub org
   2. Creates a Vercel project
   3. Creates an Upstash KV database (sets KV env vars for you)
   4. Prompts you for the remaining env vars
