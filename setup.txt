@@ -91,12 +91,36 @@ Have these ready before clicking:
   - ENABLE_EXPERIMENTAL_COREPACK = 1
 
 After deploy (~3 minutes):
-  1. Visit https://your-site.vercel.app/admin
-  2. Log in with: tinauser / tinarocks
-  3. Clone the repo locally: git clone [your-repo-url]
-  4. Run: pnpm install && pnpm dev
-  5. Fill out PROJECT_BRIEF.md
-  6. Open Claude Code and start building
+
+  1. Verify the CMS works:
+     Visit https://your-site.vercel.app/admin
+     Log in with: tinauser / tinarocks
+     (you'll be prompted to change the password on first login)
+
+  2. Clone the repo to your computer:
+       git clone git@github.com:YOUR-GITHUB-USER/my-tina-site.git
+       cd my-tina-site
+       pnpm install
+
+  3. Fill out PROJECT_BRIEF.md:
+     This is the most important file in the project. It tells
+     Claude Code about the client, brand, audience, and pages.
+     Open it and fill out every section before building anything.
+     The better you fill this out, the better Claude Code performs.
+
+  4. Start building with Claude Code:
+       pnpm dev          (start the local dev server)
+       claude             (open Claude Code in a separate terminal)
+
+     Then tell Claude Code:
+       "Read PROJECT_BRIEF.md and build the homepage. Start with
+       the hero section and overall page structure."
+
+     Keep giving it instructions for each page and feature.
+     Every push to GitHub auto-deploys to Vercel.
+
+  See the SKILLS & AGENTS section below for design, SEO, and
+  QA skills that Claude Code follows automatically.
 
 
 ================================================================
