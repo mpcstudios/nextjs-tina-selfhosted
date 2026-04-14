@@ -64,7 +64,7 @@ You need these installed before starting:
 For Vercel deployment you will also need:
 
   - A Vercel account linked to the mpcstudios GitHub org
-  - An AWS S3 bucket + IAM credentials (for media uploads)
+  - Shared MPC AWS S3 credentials (ask your team lead)
   - A GitHub Personal Access Token with repo scope
 
 
@@ -87,8 +87,12 @@ Have these ready before clicking:
   - GITHUB_PERSONAL_ACCESS_TOKEN (GitHub → Settings → Developer
     Settings → Personal Access Tokens → repo scope)
   - NEXTAUTH_SECRET (run: openssl rand -base64 32)
-  - S3_ACCESS_KEY, S3_SECRET_KEY, S3_REGION, S3_BUCKET (from AWS)
+  - S3_ACCESS_KEY + S3_SECRET_KEY (shared MPC credentials — ask team)
+  - S3_MEDIA_ROOT = your project name (e.g., "client-name")
   - ENABLE_EXPERIMENTAL_COREPACK = 1
+
+  NOTE: S3_BUCKET and S3_REGION are hardcoded in the code
+  (mpcstudios-media / us-east-1). All sites share one bucket.
 
 After deploy (~3 minutes):
 
@@ -185,11 +189,12 @@ STEP 5: SET UP VERCEL
      NEXTAUTH_SECRET          → run: openssl rand -base64 32
      GITHUB_PERSONAL_ACCESS_TOKEN → GitHub → Settings → Developer Settings
                                      → Personal Access Tokens → repo scope
-     S3_ACCESS_KEY            → from AWS IAM
-     S3_SECRET_KEY            → from AWS IAM
-     S3_REGION                → e.g., us-east-1
-     S3_BUCKET                → your S3 bucket name
+     S3_ACCESS_KEY            → shared MPC credentials (ask team)
+     S3_SECRET_KEY            → shared MPC credentials (ask team)
+     S3_MEDIA_ROOT            → your project name (e.g., "client-name")
      ENABLE_EXPERIMENTAL_COREPACK → 1
+
+     NOTE: S3_BUCKET and S3_REGION are hardcoded — no need to set them.
 
   d) Deploy — push to main, Vercel auto-deploys
 
@@ -269,8 +274,7 @@ STEP 5: SET UP VERCEL
   credentials:
     - S3_ACCESS_KEY: [your key]
     - S3_SECRET_KEY: [your secret]
-    - S3_REGION: [your region]
-    - S3_BUCKET: [your bucket]
+    - S3_MEDIA_ROOT: [your project name, e.g. client-name]
     - GITHUB_PERSONAL_ACCESS_TOKEN: [your token]
   Generate a NEXTAUTH_SECRET for me. Also set
   ENABLE_EXPERIMENTAL_COREPACK to 1.
@@ -284,9 +288,10 @@ STEP 5: SET UP VERCEL
     vercel env add GITHUB_PERSONAL_ACCESS_TOKEN production
     vercel env add S3_ACCESS_KEY production
     vercel env add S3_SECRET_KEY production
-    vercel env add S3_REGION production
-    vercel env add S3_BUCKET production
+    vercel env add S3_MEDIA_ROOT production
     vercel env add ENABLE_EXPERIMENTAL_COREPACK production
+
+  NOTE: S3_BUCKET and S3_REGION are hardcoded — no env vars needed.
 
   NOTE: The Upstash KV database must still be created in the
   Vercel dashboard (Storage → Create Database → KV). This
@@ -299,8 +304,11 @@ STEP 5: SET UP VERCEL
   b) Vercel dashboard → Storage → Create KV Database
   c) Tell Claude Code:
      "Generate a NEXTAUTH_SECRET for me."
-     Then copy the output and all other env vars into
-     Vercel → Settings → Environment Variables manually.
+     Then copy the output and set env vars in Vercel manually:
+     NEXTAUTH_SECRET, GITHUB_PERSONAL_ACCESS_TOKEN,
+     S3_ACCESS_KEY, S3_SECRET_KEY, S3_MEDIA_ROOT,
+     ENABLE_EXPERIMENTAL_COREPACK=1
+     (S3_BUCKET and S3_REGION are hardcoded — skip them)
 
 
 STEP 6: DEPLOY AND VERIFY

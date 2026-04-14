@@ -12,13 +12,11 @@ export default createMediaHandler({
       accessKeyId: process.env.S3_ACCESS_KEY || "",
       secretAccessKey: process.env.S3_SECRET_KEY || "",
     },
-    region: process.env.S3_REGION,
+    region: process.env.S3_REGION || "us-east-1",
   },
-  bucket: process.env.S3_BUCKET || "",
+  bucket: process.env.S3_BUCKET || "mpcstudios-media",
+  mediaRoot: process.env.S3_MEDIA_ROOT || "",
   authorized: async () => {
-    if (process.env.NODE_ENV === "development") {
-      return true;
-    }
     return true;
   },
 });
