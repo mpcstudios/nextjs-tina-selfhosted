@@ -3,7 +3,11 @@
 This is the MPC Studios starter template for building client websites
 with self-hosted TinaCMS, Next.js 15, Tailwind CSS, and Claude Code.
 
-Follow either the HUMAN or CLAUDE CODE setup path below.
+There are three setup paths — pick the one that fits:
+
+  FASTEST: One-click Vercel deploy (see README.md Deploy button)
+  OPTION A: Human step-by-step
+  OPTION B: Claude Code does the work
 
 
 ================================================================
@@ -62,6 +66,37 @@ For Vercel deployment you will also need:
   - A Vercel account linked to the mpcstudios GitHub org
   - An AWS S3 bucket + IAM credentials (for media uploads)
   - A GitHub Personal Access Token with repo scope
+
+
+================================================================
+FASTEST — ONE-CLICK VERCEL DEPLOY
+================================================================
+
+Click the "Deploy with Vercel" button in README.md (or open
+this URL in your browser):
+
+  https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted&env=GITHUB_PERSONAL_ACCESS_TOKEN,NEXTAUTH_SECRET,S3_ACCESS_KEY,S3_SECRET_KEY,S3_REGION,S3_BUCKET,ENABLE_EXPERIMENTAL_COREPACK&envDescription=See%20.env.example%20in%20the%20repo%20for%20details%20on%20each%20variable.%20ENABLE_EXPERIMENTAL_COREPACK%20should%20be%20set%20to%201.&envLink=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted%2Fblob%2Fmain%2F.env.example&project-name=my-tina-site&stores=%5B%7B%22type%22%3A%22kv%22%7D%5D
+
+This automatically:
+  1. Copies the repo to your GitHub account
+  2. Creates a Vercel project
+  3. Creates an Upstash KV database (sets KV env vars for you)
+  4. Prompts you for the remaining env vars
+
+Have these ready before clicking:
+  - GITHUB_PERSONAL_ACCESS_TOKEN (GitHub → Settings → Developer
+    Settings → Personal Access Tokens → repo scope)
+  - NEXTAUTH_SECRET (run: openssl rand -base64 32)
+  - S3_ACCESS_KEY, S3_SECRET_KEY, S3_REGION, S3_BUCKET (from AWS)
+  - ENABLE_EXPERIMENTAL_COREPACK = 1
+
+After deploy (~3 minutes):
+  1. Visit https://your-site.vercel.app/admin
+  2. Log in with: tinauser / tinarocks
+  3. Clone the repo locally: git clone [your-repo-url]
+  4. Run: pnpm install && pnpm dev
+  5. Fill out PROJECT_BRIEF.md
+  6. Open Claude Code and start building
 
 
 ================================================================
