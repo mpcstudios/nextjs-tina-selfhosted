@@ -147,8 +147,16 @@ OPTION B — CLAUDE CODE SETUP (let Claude do the work)
 ================================================================
 
 This is for coworkers who prefer to have Claude Code handle
-the setup. You still need the prerequisites installed above,
-plus the GitHub CLI authenticated (run: gh auth login).
+the setup. You need:
+
+  Required:
+    - GitHub CLI authenticated (run: gh auth login)
+    - pnpm installed
+
+  Optional but recommended:
+    - Vercel CLI authenticated (run: vercel login)
+      If installed, Claude Code can set env vars, link projects,
+      and check deployments without touching the Vercel dashboard.
 
 Open a terminal and start Claude Code:
   claude
@@ -195,38 +203,66 @@ STEP 4: BUILD THE SITE
 
 STEP 5: SET UP VERCEL
 
-  This step requires some manual work in the Vercel dashboard.
+  If you have the Vercel CLI installed (recommended):
+
+  "Link this project to Vercel under the mpcstudios team,
+  then set up all the environment variables. Here are my
+  credentials:
+    - S3_ACCESS_KEY: [your key]
+    - S3_SECRET_KEY: [your secret]
+    - S3_REGION: [your region]
+    - S3_BUCKET: [your bucket]
+    - GITHUB_PERSONAL_ACCESS_TOKEN: [your token]
+  Generate a NEXTAUTH_SECRET for me. Also set
+  ENABLE_EXPERIMENTAL_COREPACK to 1.
+  Then create an Upstash KV database on the Vercel dashboard
+  and tell me when it's done."
+
+  Claude Code will run:
+    vercel link --scope mpcstudios
+    openssl rand -base64 32  (generates NEXTAUTH_SECRET)
+    vercel env add NEXTAUTH_SECRET production
+    vercel env add GITHUB_PERSONAL_ACCESS_TOKEN production
+    vercel env add S3_ACCESS_KEY production
+    vercel env add S3_SECRET_KEY production
+    vercel env add S3_REGION production
+    vercel env add S3_BUCKET production
+    vercel env add ENABLE_EXPERIMENTAL_COREPACK production
+
+  NOTE: The Upstash KV database must still be created in the
+  Vercel dashboard (Storage → Create Database → KV). This
+  auto-sets KV_REST_API_URL and KV_REST_API_TOKEN. There is
+  no CLI command for this yet.
+
+  If you do NOT have the Vercel CLI:
 
   a) Go to vercel.com → Add New Project → import the repo
-
-  b) In Vercel dashboard → Storage → Create KV Database
-     (auto-sets KV_REST_API_URL and KV_REST_API_TOKEN)
-
-  c) Then tell Claude Code:
-     "I need to set up the Vercel environment variables.
-     Generate a NEXTAUTH_SECRET for me."
-
-     Claude Code will run: openssl rand -base64 32
-
-     Copy the output and paste it into Vercel → Settings →
-     Environment Variables as NEXTAUTH_SECRET.
-
-  d) Set the remaining env vars manually in Vercel:
-     - GITHUB_PERSONAL_ACCESS_TOKEN (your GitHub token)
-     - S3_ACCESS_KEY, S3_SECRET_KEY, S3_REGION, S3_BUCKET
-     - ENABLE_EXPERIMENTAL_COREPACK = 1
-
-  e) Tell Claude Code:
-     "Commit all changes and push to GitHub."
+  b) Vercel dashboard → Storage → Create KV Database
+  c) Tell Claude Code:
+     "Generate a NEXTAUTH_SECRET for me."
+     Then copy the output and all other env vars into
+     Vercel → Settings → Environment Variables manually.
 
 
-STEP 6: VERIFY
+STEP 6: DEPLOY AND VERIFY
 
-  Once Vercel deploys (2-3 minutes), tell Claude Code:
-  "Check the Vercel deployment status for this project."
+  "Commit all changes, push to GitHub, and check the Vercel
+  deployment status."
 
-  Then visit https://your-site.vercel.app/admin and log in
-  with tinauser / tinarocks.
+  Claude Code will run:
+    git add -A && git commit -m "Initial site build" && git push
+    vercel ls  (if Vercel CLI is installed)
+
+  Once deployed (~3 minutes), visit:
+    https://your-site.vercel.app/admin
+
+  Log in with: tinauser / tinarocks
+
+  If there are any issues, tell Claude Code:
+  "Check the Vercel production logs for errors."
+
+  Claude Code will run:
+    vercel logs --environment production --expand
 
 
 ================================================================
