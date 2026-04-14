@@ -1,28 +1,49 @@
 {
-  "name": "nextjs-starter",
+  "name": "nextjs-tina-selfhosted",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"next dev\"",
+    "dev:prod": "TINA_PUBLIC_IS_LOCAL=false tinacms dev -c \"next dev\"",
+    "build": "tinacms build && next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.2.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "@tinacms/cli": "^2.2.2",
+    "@tinacms/datalayer": "^2.0.15",
+    "next": "^15.3.0",
+    "next-auth": "^4.24.13",
+    "next-tinacms-s3": "^21.0.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tinacms": "^3.7.2",
+    "tinacms-authjs": "^21.0.2",
+    "tinacms-gitprovider-github": "^4.1.2",
+    "upstash-redis-level": "^1.1.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "^15.3.0",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "pnpm": {
+    "overrides": {
+      "@aws-sdk/signature-v4-crt": "npm:@aws-sdk/signature-v4@latest",
+      "aws-crt": "npm:empty-npm-package@1.0.0"
+    },
+    "patchedDependencies": {
+      "color-string@1.9.1": "patches/color-string@1.9.1.patch",
+      "tinacms-authjs@21.0.2": "patches/tinacms-authjs@21.0.2.patch"
+    }
   }
 }

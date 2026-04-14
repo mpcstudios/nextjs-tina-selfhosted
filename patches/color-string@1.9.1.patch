@@ -1,0 +1,32 @@
+diff --git a/index.mjs b/index.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..c2caa091c165811401c336e3ef821cd0133c07f4
+--- /dev/null
++++ b/index.mjs	
+@@ -0,0 +1,4 @@
++import cs from './index.js';
++export const get = cs.get;
++export const to = cs.to;
++export default cs;
+diff --git a/package.json b/package.json
+index f34ee9801ffe9fb59d1c171869a5921ee6bec74e..cfd2ff20cae5430f618f43820f36c3c7ad91845b 100755
+--- a/package.json
++++ b/package.json	
+@@ -14,8 +14,16 @@
+     "test": "node test/basic.js"
+   },
+   "license": "MIT",
++  "exports": {
++    ".": {
++      "import": "./index.mjs",
++      "require": "./index.js",
++      "default": "./index.js"
++    }
++  },
+   "files": [
+-    "index.js"
++    "index.js",
++    "index.mjs"
+   ],
+   "xo": {
+     "rules": {

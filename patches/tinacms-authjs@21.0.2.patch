@@ -1,0 +1,34 @@
+diff --git a/dist/index.js b/dist/index.js
+index 13c1c4a82a0ef3a0b6f675d76ea51724b0f7a29e..9699a3101ab463b7ae78d27d4568579d6f2ed070 100644
+--- a/dist/index.js
++++ b/dist/index.js	
+@@ -1,16 +1,18 @@
+-// src/index.ts
+-import NextAuth from "next-auth";
+-import CredentialsProvider from "next-auth/providers/credentials";
+-import { getServerSession } from "next-auth/next";
++// src/index.ts - patched: unwrap double-default for CJS/ESM interop
++import _NextAuth from "next-auth";
++const NextAuth = _NextAuth.default || _NextAuth;
++import _CredentialsProvider from "next-auth/providers/credentials";
++const CredentialsProvider = _CredentialsProvider.default || _CredentialsProvider;
++import _nextAuthNext from "next-auth/next";
++const getServerSession = _nextAuthNext.getServerSession || _nextAuthNext.default?.getServerSession;
+ 
+ // src/tinacms.ts
+-import {
+-  getCsrfToken,
+-  getSession,
+-  signIn,
+-  signOut,
+-  SessionProvider
+-} from "next-auth/react";
++import _nextAuthReact from "next-auth/react";
++const getCsrfToken = _nextAuthReact.getCsrfToken || _nextAuthReact.default?.getCsrfToken;
++const getSession = _nextAuthReact.getSession || _nextAuthReact.default?.getSession;
++const signIn = _nextAuthReact.signIn || _nextAuthReact.default?.signIn;
++const signOut = _nextAuthReact.signOut || _nextAuthReact.default?.signOut;
++const SessionProvider = _nextAuthReact.SessionProvider || _nextAuthReact.default?.SessionProvider;
+ import { AbstractAuthProvider } from "tinacms";
+ var TINA_CREDENTIALS_PROVIDER_NAME = "TinaCredentials";
+ 

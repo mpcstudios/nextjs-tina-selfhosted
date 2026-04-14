@@ -1,9 +1,9 @@
 
 {
   "framework": "nextjs",
-  "buildCommand": "next build",
-  "devCommand": "next dev",
-  "installCommand": "npm install",
+  "buildCommand": "tinacms build && next build",
+  "devCommand": "tinacms dev -c \"next dev\"",
+  "installCommand": "pnpm install",
   "headers": [
     {
       "source": "/(.*)",
