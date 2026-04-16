@@ -92,3 +92,10 @@ const { data } = useTina(props);
 2. Import and add it to the `collections` array in `/tina/config.tsx`
 3. Create matching content in `/content/<collection-path>/`
 4. Run `pnpm dev` to generate types
+
+## Build gotchas
+
+- **Local builds require the env flag:** Run `TINA_PUBLIC_IS_LOCAL=true pnpm build`. Without it, `tinacms build` tries to connect to production Redis and fails with `ECONNREFUSED`.
+- **CMS-querying pages must be dynamic:** Any page that calls `client.queries.*` (e.g. blog listing, post detail) needs `export const dynamic = "force-dynamic"` at the top. The local LevelDB database drops its connection during Next.js static generation (`LEVEL_CONNECTION_LOST`), breaking the build.
+- **No event handlers in Server Components:** Forms with `onSubmit`, buttons with `onClick`, etc. must be extracted into `"use client"` components. Next.js will throw `Event handlers cannot be passed to Client Component props` at build time otherwise.
+- **Don't run concurrent `pnpm install`:** On slower filesystems (USB, network drives), parallel installs cause `ENOTEMPTY` errors. Clean `node_modules` fully before retrying if this happens.
