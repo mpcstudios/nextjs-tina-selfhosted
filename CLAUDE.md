@@ -101,6 +101,7 @@ const { data } = useTina(props);
 - **Don't run concurrent `pnpm install`:** On slower filesystems (USB, network drives), parallel installs cause `ENOTEMPTY` errors. Clean `node_modules` fully before retrying if this happens.
 - **External image domains must be whitelisted (placeholders only):** Next.js `<Image>` blocks external URLs by default. When using placeholder services like `picsum.photos`, add them to `images.remotePatterns` in `next.config.js`. This is not needed when images are generated locally to `/public/images/`.
 - **Never combine `fill` with `width`/`height` on `<Image>`:** When using `fill`, the image sizes from its parent container. Adding explicit `width`/`height` is invalid and silently breaks rendering. Use `fill` inside a sized parent, or use `width`/`height` without `fill` — never both.
+- **`vercel.json` buildCommand overrides `package.json`:** If `vercel.json` has a `buildCommand`, it completely replaces the `build` script in `package.json`. Any post-build steps (like `scripts/patch-admin.sh`) must be added to BOTH places, or Vercel deploys will silently skip them.
 
 ## Customizing admin panel branding
 
