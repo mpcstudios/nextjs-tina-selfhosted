@@ -99,3 +99,27 @@ const { data } = useTina(props);
 - **CMS-querying pages must be dynamic:** Any page that calls `client.queries.*` (e.g. blog listing, post detail) needs `export const dynamic = "force-dynamic"` at the top. The local LevelDB database drops its connection during Next.js static generation (`LEVEL_CONNECTION_LOST`), breaking the build.
 - **No event handlers in Server Components:** Forms with `onSubmit`, buttons with `onClick`, etc. must be extracted into `"use client"` components. Next.js will throw `Event handlers cannot be passed to Client Component props` at build time otherwise.
 - **Don't run concurrent `pnpm install`:** On slower filesystems (USB, network drives), parallel installs cause `ENOTEMPTY` errors. Clean `node_modules` fully before retrying if this happens.
+- **External image domains must be whitelisted (placeholders only):** Next.js `<Image>` blocks external URLs by default. When using placeholder services like `picsum.photos`, add them to `images.remotePatterns` in `next.config.js`. This is not needed when images are generated locally to `/public/images/`.
+- **Never combine `fill` with `width`/`height` on `<Image>`:** When using `fill`, the image sizes from its parent container. Adding explicit `width`/`height` is invalid and silently breaks rendering. Use `fill` inside a sized parent, or use `width`/`height` without `fill` — never both.
+
+## Customizing admin panel branding
+
+The TinaCMS admin panel (`/admin`) is a pre-built React SPA. The Tina logo is baked into the JS bundle and can't be changed via config. Instead, this starter includes a post-build patch system:
+
+**How it works:**
+
+1. `tinacms build` generates `public/admin/index.html` (gitignored — regenerated every build)
+2. `scripts/patch-admin.sh` runs immediately after, applying three changes:
+   - Replaces the page `<title>` (default: "TinaCMS" → "MPC Studios CMS")
+   - Overwrites the favicon SVG with the MPC cube icon
+   - Injects `scripts/admin-branding.html` before `</body>` — a script that uses `MutationObserver` to swap Tina's inline SVG logos with the MPC icon
+3. The build script in `package.json` chains these: `tinacms build && bash scripts/patch-admin.sh && next build`
+
+**To change the logo for a new project:**
+
+1. Edit `scripts/admin-branding.html` — replace the SVG markup inside the `I` variable with your client's logo SVG
+2. Edit `scripts/patch-admin.sh` — replace the favicon SVG in the heredoc and update the `<title>` text
+3. The logo swap targets Tina SVGs by `viewBox` attribute:
+   - `viewBox="0 0 1020 254"` — the sidebar wordmark
+   - `viewBox="0 0 32 32"` — the small icon above the editor
+4. Run `pnpm build` — the patch applies automatically
