@@ -1,10 +1,9 @@
 import { createDatabase, createLocalDatabase } from "@tinacms/datalayer";
 import { RedisLevel } from "upstash-redis-level";
-import { GitHubProvider } from "tinacms-gitprovider-github";
+import { GitHubAppProvider } from "./github-app-provider";
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === "true";
 
-const token = process.env.GITHUB_PERSONAL_ACCESS_TOKEN as string;
 const owner = (process.env.GITHUB_OWNER ||
   process.env.VERCEL_GIT_REPO_OWNER) as string;
 const repo = (process.env.GITHUB_REPO ||
@@ -19,15 +18,29 @@ if (!branch) {
   );
 }
 
+function makeGitProvider() {
+  const appId = process.env.GITHUB_APP_ID as string;
+  const privateKey = process.env.GITHUB_APP_PRIVATE_KEY as string;
+  const installationId = process.env.GITHUB_APP_INSTALLATION_ID as string;
+  if (!appId || !privateKey || !installationId) {
+    throw new Error(
+      "Missing GitHub App env vars. Set GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, and GITHUB_APP_INSTALLATION_ID. See CLAUDE.md → New-site setup ritual."
+    );
+  }
+  return new GitHubAppProvider({
+    appId,
+    privateKey,
+    installationId,
+    owner,
+    repo,
+    branch,
+  });
+}
+
 export default isLocal
   ? createLocalDatabase()
   : createDatabase({
-      gitProvider: new GitHubProvider({
-        branch,
-        owner,
-        repo,
-        token,
-      }),
+      gitProvider: makeGitProvider(),
       // @ts-expect-error RedisLevel type incompatibility with abstract-level
       databaseAdapter: new RedisLevel<string, Record<string, any>>({
         redis: {

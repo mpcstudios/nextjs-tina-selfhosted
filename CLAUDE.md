@@ -61,16 +61,148 @@ Follow all process, design, and content guidelines in `agents/website-design-ski
 
 ---
 
+# New-site setup ritual (post-deploy)
+
+If this site has never been edited via `/admin`, run this ritual once. The user can say **"run the new-site setup"** and you (Claude Code) should drive it sequentially. The user has `infisical`, `vercel`, and `gh` CLIs pre-installed.
+
+**Secret hygiene** — never echo secret values to chat. Use `infisical secrets set --silent ... > /dev/null 2>&1` and shred any temp files. See `~/.claude/projects/-media-ss-My-Passport-MPC-AI-Sites/memory/feedback_secret_hygiene.md` if running for Sal.
+
+## Prerequisites (verify silently)
+
+Run each and confirm exit 0:
+```bash
+infisical user             # logged in?
+vercel whoami              # logged in?
+gh auth status             # logged in?
+```
+If any fails, ask the user to log into that CLI and pause. Do not proceed.
+
+## Step 1 — Install the GitHub App on this repo (browser)
+
+The MPC Studios CMS App must be installed on this site's repo. This requires a browser click; you can't automate it.
+
+Tell the user:
+> Open https://github.com/apps/mpc-studios-cms/installations/new in your browser. Pick **"Only select repositories"**, choose **THIS repo**, click Install. After install, the URL ends in `/installations/<NUMBER>` — paste that number here.
+
+Wait for the user to paste the installation ID. Save it as `INSTALLATION_ID` for the rest of the ritual.
+
+## Step 2 — Determine the site slug
+
+The slug is the GitHub repo name (e.g., `client-name`). Get it:
+```bash
+gh repo view --json name --jq .name
+```
+Use this as `<slug>` below. Confirm with the user before proceeding.
+
+## Step 3 — Create the Infisical project
+
+Today this is a UI step (Infisical CLI does not yet expose project creation). Tell the user:
+> Open https://app.infisical.com → click **+ Add new project** → name it `site-<slug>` (use the slug from step 2) → create.
+
+Wait for confirmation. Then continue.
+
+## Step 4 — Link this repo to the new Infisical project
+
+```bash
+infisical init
+```
+Walk the user through picking **MPC Studios** org → **site-<slug>** project. This writes `.infisical.json` (gitignored — do not commit).
+
+## Step 5 — Add Secret Imports from `mpc-shared` (UI)
+
+Tell the user:
+> In Infisical, open the `site-<slug>` project → click into the `prod` environment → look for **+ Add Import** (or the Imports tab) → import from `mpc-shared / prod / /`. This brings in `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_REGION` automatically.
+
+(If your Infisical version doesn't expose imports in the UI, skip this — the syncs will still work, you'll just have two separate Vercel sync sources later.)
+
+## Step 6 — Push per-site secrets silently
+
+Generate a fresh `NEXTAUTH_SECRET` and push the per-site values without echoing them:
+
+```bash
+NEXTAUTH_SECRET_VAL=$(openssl rand -base64 32)
+infisical secrets set --env=prod --silent \
+  GITHUB_APP_INSTALLATION_ID="$INSTALLATION_ID" \
+  S3_MEDIA_ROOT="<slug>" \
+  ENABLE_EXPERIMENTAL_COREPACK="1" \
+  NEXTAUTH_SECRET="$NEXTAUTH_SECRET_VAL" \
+  > /dev/null 2>&1
+unset NEXTAUTH_SECRET_VAL
+```
+
+## Step 7 — Pull KV vars from Vercel into Infisical (silently)
+
+```bash
+vercel link --yes --project <slug>
+vercel env pull /tmp/v.env --environment=production --yes > /dev/null 2>&1
+set -a; source /tmp/v.env; set +a
+infisical secrets set --env=prod --silent \
+  KV_REST_API_URL="$KV_REST_API_URL" \
+  KV_REST_API_TOKEN="$KV_REST_API_TOKEN" \
+  KV_REST_API_READ_ONLY_TOKEN="$KV_REST_API_READ_ONLY_TOKEN" \
+  KV_URL="$KV_URL" \
+  REDIS_URL="$REDIS_URL" \
+  > /dev/null 2>&1
+shred -u /tmp/v.env
+unset KV_REST_API_URL KV_REST_API_TOKEN KV_REST_API_READ_ONLY_TOKEN KV_URL REDIS_URL
+```
+
+## Step 8 — Set up Infisical → Vercel sync (UI)
+
+Tell the user:
+> In the `site-<slug>` Infisical project: **Integrations → Secret Syncs → + Add Sync → Vercel**.
+> - **Source**: Production / `/`
+> - **Destination**: App Connection `mpcstudios-vercel` → Vercel project `<slug>` → Production
+> - **Initial Sync Behavior**: Overwrite Destination Secrets
+> - **Disable Secret Deletion**: ON (toggle on)
+> - **Auto-Sync**: ON
+>
+> Save. Then repeat the exact same setup in the `mpc-shared` project (same destination Vercel project + Production env). Both syncs target the same Vercel project; they coexist because deletion is disabled on both.
+
+If the user sees no `mpcstudios-vercel` App Connection, route them to **App Connections → + Add → Vercel → API Token** and have them paste a Vercel access token (scoped to the `mpcstudios` team).
+
+## Step 9 — Trigger first real deploy
+
+```bash
+git commit --allow-empty -m "Trigger deploy after Infisical setup" && git push
+```
+
+Watch the deploy:
+```bash
+vercel ls --prod
+```
+Wait for **Ready**. If **Error**, fetch logs and triage with the user.
+
+## Step 10 — Verify end-to-end
+
+Tell the user:
+> Go to `https://<slug>.vercel.app/admin`, log in with `tinauser` / `tinarocks`, change the password, edit any content, save.
+
+Then verify the commit:
+```bash
+gh api /repos/mpcstudios/<slug>/commits?per_page=1 --jq '.[0].commit.author.name'
+```
+Expect: `mpc-studios-cms[bot]`. If it says anything else, something's misconfigured — check `GITHUB_APP_INSTALLATION_ID` in Vercel.
+
+Then test S3:
+> Upload an image to the post via TinaCMS media manager.
+The image URL should be `https://mpcstudios-media.s3.us-east-1.amazonaws.com/<slug>/...`. If the upload fails, check S3 keys synced from `mpc-shared`.
+
+When all three (commit author + content live on site + image upload) work, the site is fully set up.
+
+---
+
 # TinaCMS
 
 - **Admin panel:** `/admin` — visual content editor
-- **Content:** Stored as markdown/JSON in `/content`, committed to Git
+- **Content:** Stored as markdown/JSON in `/content`, committed to Git as `mpc-studios-cms[bot]` via the GitHub App
 - **Collections:** Defined in `/tina/collections/` — add new content types here
-- **Auth:** `tinacms-authjs` with NextAuth.js — username/password login
-- **Media:** S3 uploads via `next-tinacms-s3`
+- **Auth:** `tinacms-authjs` with NextAuth.js — username/password login (default `tinauser` / `tinarocks`, change on first login)
+- **Media:** S3 uploads via `next-tinacms-s3` to shared `mpcstudios-media` bucket, per-site folder via `S3_MEDIA_ROOT`
 - **Database:** Upstash Redis via `upstash-redis-level`
-- **Dev mode:** `pnpm dev` uses local auth (no login required) and local database
-- **Prod mode:** `pnpm dev:prod` uses real auth + Redis (requires `.env.local`)
+- **Secrets:** All managed in Infisical (`mpc-shared` for cross-MPC values, `site-<slug>` for per-site). Sync pushes to Vercel automatically.
+- **Dev mode:** `pnpm dev` uses local auth (no login required) and local LevelDB
+- **Prod mode:** `infisical run --env=prod -- pnpm dev:prod` uses real auth + Redis with secrets injected from Infisical (no `.env.local` needed)
 
 ## Adding editable content to pages
 

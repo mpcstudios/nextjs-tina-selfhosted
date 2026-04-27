@@ -1,33 +1,39 @@
 # MPC Studios — Next.js + TinaCMS Self-Hosted Starter
 
-A Next.js 15 starter template with self-hosted TinaCMS for visual content editing, Tailwind CSS, TypeScript, and Claude Code workflow.
+A Next.js 15 starter template with self-hosted TinaCMS for visual content editing, Tailwind CSS, TypeScript, and a Claude Code workflow.
 
-Includes: Git-backed content, username/password auth, S3 media uploads, Upstash Redis database.
+Includes: Git-backed content, username/password auth, S3 media uploads, Upstash Redis database, GitHub App-based commits, Infisical-managed secrets.
 
 ## One-Click Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted&env=GITHUB_PERSONAL_ACCESS_TOKEN,NEXTAUTH_SECRET,S3_ACCESS_KEY,S3_SECRET_KEY,S3_MEDIA_ROOT,ENABLE_EXPERIMENTAL_COREPACK&envDescription=S3%20uses%20the%20shared%20mpcstudios-media%20bucket.%20Set%20S3_MEDIA_ROOT%20to%20your%20project%20name.%20ENABLE_EXPERIMENTAL_COREPACK%20%3D%201.&envLink=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted%2Fblob%2Fmain%2F.env.example&project-name=my-tina-site&stores=%5B%7B%22type%22%3A%22kv%22%7D%5D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted&project-name=my-tina-site&stores=%5B%7B%22type%22%3A%22kv%22%7D%5D)
 
-This will:
-1. Copy this repo to your GitHub account
-2. Create a Vercel project
-3. Create an Upstash KV database (auto-sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`)
-4. Prompt you for the remaining environment variables
+The button creates:
+1. A copy of this repo in the **mpcstudios** GitHub org (set Git Scope correctly during deploy)
+2. A Vercel project linked to that repo
+3. An Upstash KV database (auto-sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`)
 
-After deploy, log in to the CMS at `https://your-site.vercel.app/admin` with **tinauser** / **tinarocks**.
+The first deploy succeeds with no env vars — but `/admin` will not work yet. Secrets come next, from Infisical.
 
-## What you need before deploying
+## After deploy: run the new-site setup
 
-| Variable | Value |
-|----------|-------|
-| `GITHUB_PERSONAL_ACCESS_TOKEN` | [Create a token](https://github.com/settings/personal-access-tokens/new) with `repo` scope |
-| `NEXTAUTH_SECRET` | Run `openssl rand -base64 32` in your terminal |
-| `S3_ACCESS_KEY` | Shared MPC AWS credentials (ask your team) |
-| `S3_SECRET_KEY` | Shared MPC AWS credentials (ask your team) |
-| `S3_MEDIA_ROOT` | Your project name (e.g., `client-name`) — this is the folder in the shared S3 bucket |
-| `ENABLE_EXPERIMENTAL_COREPACK` | `1` |
+`cd` into your locally cloned copy of the new repo and open Claude Code. Then say:
 
-**Note:** `S3_BUCKET` (`mpcstudios-media`) and `S3_REGION` (`us-east-1`) are pre-configured in the code. All MPC sites share one S3 bucket — each site gets its own folder via `S3_MEDIA_ROOT`.
+> Run the new-site setup.
+
+Claude Code reads `CLAUDE.md` and walks through:
+
+1. Verifying you're logged into `infisical`, `vercel`, and `gh` CLIs
+2. Installing the **MPC Studios CMS** GitHub App on your new repo (one browser click)
+3. Creating an Infisical project named `site-<slug>`
+4. Populating per-site secrets and importing shared secrets from `mpc-shared`
+5. Configuring the Infisical → Vercel sync
+6. Triggering a real deploy
+7. Confirming `/admin` saves commit as `mpc-studios-cms[bot]`
+
+The whole thing is ~5 minutes plus one browser click. If you'd rather do each step manually, follow `setup.txt`.
+
+After setup, sign in to `https://your-site.vercel.app/admin` with **tinauser** / **tinarocks** (change the password on first login).
 
 ## Local Development
 
@@ -37,8 +43,14 @@ pnpm dev
 ```
 
 - Site: http://localhost:3000
-- CMS Admin: http://localhost:3000/admin (no login needed locally)
+- CMS Admin: http://localhost:3000/admin (local mode — no login required, content writes to disk)
+
+For local prod-mode testing (real Infisical secrets, real Redis, commits to your real repo), use:
+
+```bash
+infisical run --env=prod -- pnpm dev:prod
+```
 
 ## Full Setup Instructions
 
-See `setup.txt` for detailed human and Claude Code setup paths.
+See `setup.txt` for the manual versions of all three setup paths (Claude Code, human step-by-step, and the planned `scripts/spinup-site.sh` automation).
