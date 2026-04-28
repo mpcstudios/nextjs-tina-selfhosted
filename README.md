@@ -6,7 +6,7 @@ Includes: Git-backed content, username/password auth, S3 media uploads, Upstash 
 
 ## One-Click Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted&project-name=my-tina-site&stores=%5B%7B%22type%22%3A%22kv%22%7D%5D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted-v2&project-name=my-tina-site&stores=%5B%7B%22type%22%3A%22kv%22%7D%5D)
 
 The button creates:
 1. A copy of this repo in the **mpcstudios** GitHub org (set Git Scope correctly during deploy)

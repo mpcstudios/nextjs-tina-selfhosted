@@ -86,7 +86,7 @@ STEP 1: CLICK THE DEPLOY BUTTON
 
   Open README.md and click "Deploy with Vercel". Or use this URL:
 
-    https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted&project-name=my-tina-site&stores=%5B%7B%22type%22%3A%22kv%22%7D%5D
+    https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmpcstudios%2Fnextjs-tina-selfhosted-v2&project-name=my-tina-site&stores=%5B%7B%22type%22%3A%22kv%22%7D%5D
 
   IMPORTANT: On the Vercel screen, change "Git Scope" to mpcstudios
   so the new repo is created under the org, not your personal GitHub.
