@@ -87,10 +87,17 @@ green "  ✓ token obtained"
 api() { curl -fsS -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" "$@"; }
 
 # ─── 3. Create Vercel project + Upstash KV ────────────────────────────────────
-bold "→ Linking Vercel project ($SLUG)"
+bold "→ Vercel project ($SLUG)"
 if [ ! -f .vercel/project.json ]; then
+  if ! vercel project inspect "$SLUG" --scope "$VERCEL_TEAM" >/dev/null 2>&1; then
+    vercel project add "$SLUG" --scope "$VERCEL_TEAM" >/dev/null 2>&1 \
+      || die "Failed to create Vercel project."
+    green "  ✓ project created"
+  else
+    green "  ✓ project already exists"
+  fi
   vercel link --yes --project "$SLUG" --scope "$VERCEL_TEAM" >/dev/null 2>&1 \
-    || die "vercel link failed. Maybe the Vercel project doesn't exist yet — create it first by running 'vercel deploy' once, or via the Vercel dashboard."
+    || die "vercel link failed."
 fi
 green "  ✓ linked"
 
