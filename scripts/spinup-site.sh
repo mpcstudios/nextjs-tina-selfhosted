@@ -101,6 +101,10 @@ if [ ! -f .vercel/project.json ]; then
 fi
 green "  ✓ linked"
 
+bold "→ Connecting Vercel project to GitHub repo (auto-deploys on push)"
+vercel git connect --yes >/dev/null 2>&1 || die "vercel git connect failed."
+green "  ✓ git connected"
+
 bold "→ Provisioning Upstash for Redis"
 if vercel env ls production 2>/dev/null | grep -q "KV_REST_API_URL"; then
   green "  ✓ already provisioned (KV_REST_API_URL exists)"
@@ -112,22 +116,27 @@ else
   green "  ✓ provisioned"
 fi
 
-# ─── 4. Pause for GitHub App install ──────────────────────────────────────────
-bold "→ GitHub App install (browser, can't avoid)"
-echo
-echo "  Open this URL: $GITHUB_APP_INSTALL_URL"
-echo "  Pick 'Only select repositories', choose '$SLUG', click Install."
-echo "  After install, the URL will end in /installations/<NUMBER>."
-echo
-read -r -p "  Paste the installation ID: " INSTALLATION_ID
-[ -n "$INSTALLATION_ID" ] || die "Installation ID is required."
-green "  ✓ installation ID captured"
+# ─── 4. GitHub App install (browser, can't avoid) ─────────────────────────────
+bold "→ GitHub App install"
+if [ -n "${GITHUB_APP_INSTALLATION_ID:-}" ]; then
+  INSTALLATION_ID="$GITHUB_APP_INSTALLATION_ID"
+  green "  ✓ using GITHUB_APP_INSTALLATION_ID from env: $INSTALLATION_ID"
+else
+  echo
+  echo "  Open this URL: $GITHUB_APP_INSTALL_URL"
+  echo "  Pick 'Only select repositories', choose '$SLUG', click Install."
+  echo "  After install, the URL will end in /installations/<NUMBER>."
+  echo
+  read -r -p "  Paste the installation ID: " INSTALLATION_ID
+  [ -n "$INSTALLATION_ID" ] || die "Installation ID is required."
+  green "  ✓ installation ID captured"
+fi
 
 # ─── 5. Create Infisical project ──────────────────────────────────────────────
 bold "→ Creating Infisical project (site-$SLUG)"
 PROJECT_RESP=$(api -X POST "$INFISICAL_API/api/v2/workspace" \
   -d "{\"projectName\":\"site-$SLUG\",\"type\":\"secret-manager\",\"description\":\"Per-site secrets for mpcstudios/$SLUG\"}" \
-  || true)
+  2>/dev/null || true)
 PROJECT_ID=$(printf '%s' "$PROJECT_RESP" | jq -r '.project.id // empty')
 if [ -z "$PROJECT_ID" ]; then
   EXISTING_ID=$(api -X GET "$INFISICAL_API/api/v1/workspace" | jq -r --arg n "site-$SLUG" '.workspaces[]? | select(.name==$n) | .id' | head -1)
@@ -145,9 +154,12 @@ printf '{"workspaceId":"%s","defaultEnvironment":"","gitBranchToEnvironmentMappi
 green "  ✓ wrote .infisical.json"
 
 # ─── 6. Push per-site secrets via Infisical CLI (silent) ──────────────────────
+# Use Machine Identity token explicitly so we don't rely on the CLI user being
+# a member of the freshly-created project.
 bold "→ Pushing per-site secrets (silently)"
 NEXTAUTH_SECRET_VAL=$(openssl rand -base64 32)
 infisical secrets set --env=prod --silent \
+  --token="$TOKEN" --projectId="$PROJECT_ID" \
   GITHUB_APP_INSTALLATION_ID="$INSTALLATION_ID" \
   S3_MEDIA_ROOT="$SLUG" \
   ENABLE_EXPERIMENTAL_COREPACK="1" \
@@ -165,6 +177,7 @@ vercel env pull "$TMP_ENV" --environment=production --yes >/dev/null 2>&1 \
   || die "Failed to pull Vercel env."
 set -a; . "$TMP_ENV"; set +a
 infisical secrets set --env=prod --silent \
+  --token="$TOKEN" --projectId="$PROJECT_ID" \
   KV_REST_API_URL="${KV_REST_API_URL:-}" \
   KV_REST_API_TOKEN="${KV_REST_API_TOKEN:-}" \
   KV_REST_API_READ_ONLY_TOKEN="${KV_REST_API_READ_ONLY_TOKEN:-}" \
@@ -177,6 +190,11 @@ unset KV_REST_API_URL KV_REST_API_TOKEN KV_REST_API_READ_ONLY_TOKEN KV_URL REDIS
 green "  ✓ KV vars pushed"
 
 # ─── 8. Create Vercel Secret Syncs ────────────────────────────────────────────
+VERCEL_PROJECT_ID=$(jq -r .projectId .vercel/project.json)
+VERCEL_TEAM_ID=$(jq -r .orgId .vercel/project.json)
+[ -n "$VERCEL_PROJECT_ID" ] || die "Couldn't read Vercel projectId from .vercel/project.json"
+[ -n "$VERCEL_TEAM_ID" ] || die "Couldn't read Vercel teamId (orgId) from .vercel/project.json"
+
 create_vercel_sync() {
   local sync_name="$1"
   local source_project_id="$2"
@@ -192,9 +210,11 @@ create_vercel_sync() {
       \"disableSecretDeletion\": true
     },
     \"destinationConfig\": {
-      \"app\": \"$SLUG\",
+      \"scope\": \"project\",
+      \"app\": \"$VERCEL_PROJECT_ID\",
+      \"appName\": \"$SLUG\",
       \"env\": \"production\",
-      \"teamId\": \"$VERCEL_TEAM\"
+      \"teamId\": \"$VERCEL_TEAM_ID\"
     }
   }" >/dev/null
 }
